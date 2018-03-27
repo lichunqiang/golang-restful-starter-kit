@@ -12,21 +12,23 @@ var Config appConfig
 
 type appConfig struct {
 	// the path to the error message file. Defaults to "config/errors.yaml"
-	ErrorFile          string `mapstructure:"error_file"`
+	ErrorFile string `mapstructure:"error_file"`
 	// the server port. Defaults to 8080
-	ServerPort         int    `mapstructure:"server_port"`
+	ServerPort int    `mapstructure:"server_port"`
+	DBDriver   string `mapstructure:"driver"`
 	// the data source name (DSN) for connecting to the database. required.
-	DSN                string `mapstructure:"dsn"`
+	DSN string `mapstructure:"dsn"`
 	// the signing method for JWT. Defaults to "HS256"
-	JWTSigningMethod   string `mapstructure:"jwt_signing_method"`
+	JWTSigningMethod string `mapstructure:"jwt_signing_method"`
 	// JWT signing key. required.
-	JWTSigningKey      string `mapstructure:"jwt_signing_key"`
+	JWTSigningKey string `mapstructure:"jwt_signing_key"`
 	// JWT verification key. required.
 	JWTVerificationKey string `mapstructure:"jwt_verification_key"`
 }
 
 func (config appConfig) Validate() error {
 	return validation.ValidateStruct(&config,
+		validation.Field(&config.DBDriver, validation.Required),
 		validation.Field(&config.DSN, validation.Required),
 		validation.Field(&config.JWTSigningKey, validation.Required),
 		validation.Field(&config.JWTVerificationKey, validation.Required),

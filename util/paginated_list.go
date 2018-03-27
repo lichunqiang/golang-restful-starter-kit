@@ -5,13 +5,17 @@ import (
 	"strings"
 )
 
+type PageMeta struct {
+	Page       int `json:"page"`
+	PerPage    int `json:"per-page"`
+	PageCount  int `json:"page-count"`
+	TotalCount int `json:"total"`
+}
+
 // PaginatedList represents a paginated list of data items.
 type PaginatedList struct {
-	Page       int         `json:"page"`
-	PerPage    int         `json:"per_page"`
-	PageCount  int         `json:"page_count"`
-	TotalCount int         `json:"total_count"`
-	Items      interface{} `json:"items"`
+	Meta  PageMeta    `json:"_meta"`
+	Items interface{} `json:"items"`
 }
 
 // NewPaginatedList creates a new Paginated instance.
@@ -35,21 +39,23 @@ func NewPaginatedList(page, perPage, total int) *PaginatedList {
 	}
 
 	return &PaginatedList{
-		Page:       page,
-		PerPage:    perPage,
-		TotalCount: total,
-		PageCount:  pageCount,
+		Meta: PageMeta{
+			Page:       page,
+			PerPage:    perPage,
+			TotalCount: total,
+			PageCount:  pageCount,
+		},
 	}
 }
 
 // Offset returns the OFFSET value that can be used in a SQL statement.
 func (p *PaginatedList) Offset() int {
-	return (p.Page - 1) * p.PerPage
+	return (p.Meta.Page - 1) * p.Meta.PerPage
 }
 
 // Limit returns the LIMIT value that can be used in a SQL statement.
 func (p *PaginatedList) Limit() int {
-	return p.PerPage
+	return p.Meta.PerPage
 }
 
 // BuildLinkHeader returns an HTTP header containing the links about the pagination.
@@ -78,8 +84,8 @@ func (p *PaginatedList) BuildLinkHeader(baseUrl string, defaultPerPage int) stri
 // will be empty.
 func (p *PaginatedList) BuildLinks(baseUrl string, defaultPerPage int) [4]string {
 	var links [4]string
-	pageCount := p.PageCount
-	page := p.Page
+	pageCount := p.Meta.PageCount
+	page := p.Meta.Page
 	if pageCount >= 0 && page > pageCount {
 		page = pageCount
 	}
@@ -98,7 +104,7 @@ func (p *PaginatedList) BuildLinks(baseUrl string, defaultPerPage int) [4]string
 	} else if pageCount < 0 {
 		links[2] = fmt.Sprintf("%vpage=%v", baseUrl, page+1)
 	}
-	if perPage := p.PerPage; perPage != defaultPerPage {
+	if perPage := p.Meta.PerPage; perPage != defaultPerPage {
 		for i := 0; i < 4; i++ {
 			if links[i] != "" {
 				links[i] += fmt.Sprintf("&per_page=%v", perPage)
